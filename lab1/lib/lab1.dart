@@ -74,7 +74,7 @@ ParseResult parseLine(String line) {
     return (lesson: null, error: 'час «$timeText» не схожий на ГГ:ХХ');
   }
   final addedOn = DateTime.tryParse(dateText);
-  if (addedOn == null) {
+  if (addedOn == null || formatDate(addedOn) != dateText) {
     return (lesson: null, error: 'некоректна дата «$dateText»');
   }
   return (
