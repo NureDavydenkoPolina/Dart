@@ -85,7 +85,7 @@ void main() {
   print('Чеки: $formatted');
 
   revenueByKind(sales).forEach((kind, sum) {
-    print(' $kind: ${formatAmount(sum)}');
+    print('  $kind: ${formatAmount(sum)}');
   });
 
   printReport(sales, onlyTakeaway: true);

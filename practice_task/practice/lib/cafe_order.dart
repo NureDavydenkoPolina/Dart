@@ -25,10 +25,26 @@ class MenuItem implements Comparable<MenuItem> {
     : name = _validateName(name),
       priceKopecks = _validatePrice(priceKopecks);
 
+  /// Порівнює пункти за ціною, а за однакової ціни - за назвою.
+  ///
+  /// Результат `0` повертається лише для пунктів, які вважаються рівними
+  /// за `==`, тому порядок узгоджений із рівністю.
   @override
   int compareTo(MenuItem other) {
-    return priceKopecks.compareTo(other.priceKopecks);
+    final byPrice = priceKopecks.compareTo(other.priceKopecks);
+
+    return byPrice != 0 ? byPrice : name.compareTo(other.name);
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is MenuItem &&
+        other.name == name &&
+        other.priceKopecks == priceKopecks;
+  }
+
+  @override
+  int get hashCode => Object.hash(name, priceKopecks);
 
   static String _validateName(String value) {
     if (value.trim().isEmpty) {
@@ -139,15 +155,7 @@ class CafeOrder with StateChangeJournal {
   /// Кидає [ArgumentError], якщо [newNumber] не є додатним або збігається
   /// з номером попереднього замовлення.
   factory CafeOrder.repeat(CafeOrder previous, int newNumber) {
-    _validateNumber(newNumber);
-
-    if (newNumber == previous.number) {
-      throw ArgumentError.value(
-        newNumber,
-        'newNumber',
-        'Повторене замовлення повинно мати новий номер.',
-      );
-    }
+    _requireNewNumber(previous, newNumber);
 
     final order = CafeOrder(newNumber, hasLoyaltyCard: previous.hasLoyaltyCard);
 
@@ -207,14 +215,9 @@ class CafeOrder with StateChangeJournal {
   /// Кидає [RangeError], якщо нова кількість перевищує 20.
   void addItem(MenuItem item, {int quantity = 1}) {
     _ensureNewOrder();
-    _validateMenuItem(item);
     _validateQuantity(quantity);
 
-    final index = _items.indexWhere(
-      (orderItem) =>
-          orderItem.item.name == item.name &&
-          orderItem.item.priceKopecks == item.priceKopecks,
-    );
+    final index = _items.indexWhere((orderItem) => orderItem.item == item);
 
     if (index == -1) {
       _items.add(OrderItem(item: item, quantity: quantity));
@@ -244,14 +247,9 @@ class CafeOrder with StateChangeJournal {
   /// Кидає [RangeError], якщо [quantity] перевищує поточну кількість.
   void removeItem(MenuItem item, {int quantity = 1}) {
     _ensureNewOrder();
-    _validateMenuItem(item);
     _validateQuantity(quantity);
 
-    final index = _items.indexWhere(
-      (orderItem) =>
-          orderItem.item.name == item.name &&
-          orderItem.item.priceKopecks == item.priceKopecks,
-    );
+    final index = _items.indexWhere((orderItem) => orderItem.item == item);
 
     if (index == -1) {
       throw StateError('Позицію "${item.name}" не знайдено в замовленні.');
@@ -312,6 +310,20 @@ class CafeOrder with StateChangeJournal {
     }
   }
 
+  static int _requireNewNumber(CafeOrder previous, int newNumber) {
+    _validateNumber(newNumber);
+
+    if (newNumber == previous.number) {
+      throw ArgumentError.value(
+        newNumber,
+        'newNumber',
+        'Нове замовлення повинно мати інший номер, ніж попереднє.',
+      );
+    }
+
+    return newNumber;
+  }
+
   static void _validateNumber(int number) {
     if (number <= 0) {
       throw ArgumentError.value(
@@ -331,31 +343,27 @@ class CafeOrder with StateChangeJournal {
       );
     }
   }
-
-  static void _validateMenuItem(MenuItem item) {
-    if (item.name.trim().isEmpty) {
-      throw ArgumentError.value(
-        item.name,
-        'name',
-        'Назва пункту меню не може бути порожньою.',
-      );
-    }
-
-    if (item.priceKopecks <= 0) {
-      throw ArgumentError.value(
-        item.priceKopecks,
-        'priceKopecks',
-        'Ціна повинна бути додатною.',
-      );
-    }
-  }
 }
 
 /// Представляє варіант замовлення на виніс із додатковою вартістю упаковки.
 class TakeawayCafeOrder extends CafeOrder {
-  /// Створює замовлення на виніс на основі [source].
-  TakeawayCafeOrder.fromOrder(CafeOrder source)
-    : super(source.number, hasLoyaltyCard: source.hasLoyaltyCard) {
+  /// Створює порожнє замовлення на виніс з номером [number].
+  ///
+  /// Кидає [ArgumentError], якщо [number] не є додатним.
+  TakeawayCafeOrder(int number, {bool hasLoyaltyCard = false})
+    : super(number, hasLoyaltyCard: hasLoyaltyCard);
+
+  /// Створює замовлення на виніс з номером [newNumber] на основі [source].
+  ///
+  /// Позиції та картка лояльності копіюються, початковий стан є `newOrder`.
+  ///
+  /// Кидає [ArgumentError], якщо [newNumber] не є додатним або збігається
+  /// з номером [source].
+  TakeawayCafeOrder.fromOrder(CafeOrder source, int newNumber)
+    : super(
+        CafeOrder._requireNewNumber(source, newNumber),
+        hasLoyaltyCard: source.hasLoyaltyCard,
+      ) {
     for (final orderItem in source.items) {
       addItem(orderItem.item, quantity: orderItem.quantity);
     }
