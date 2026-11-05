@@ -1,0 +1,11 @@
+include: package:lints/recommended.yaml
+
+linter:
+  rules:
+    - avoid_positional_boolean_parameters
+    - unnecessary_lambdas
+    - prefer_final_locals
+    - prefer_final_in_for_each
+    - no_dynamic_casts
+    - no_raw_types
+    - public_member_api_docs
