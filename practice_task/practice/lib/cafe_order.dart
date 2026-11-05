@@ -350,8 +350,7 @@ class TakeawayCafeOrder extends CafeOrder {
   /// Створює порожнє замовлення на виніс з номером [number].
   ///
   /// Кидає [ArgumentError], якщо [number] не є додатним.
-  TakeawayCafeOrder(int number, {bool hasLoyaltyCard = false})
-    : super(number, hasLoyaltyCard: hasLoyaltyCard);
+  TakeawayCafeOrder(super.number, {super.hasLoyaltyCard});
 
   /// Створює замовлення на виніс з номером [newNumber] на основі [source].
   ///
