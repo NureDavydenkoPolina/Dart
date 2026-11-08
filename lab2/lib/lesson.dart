@@ -1,10 +1,10 @@
-/// Заняття розкладу: версія з класичним конструктором (для порівняння).
+/// Заняття розкладу: незмінний клас-сутність.
 library;
 
-import 'package:lab2/entity.dart';
-import 'package:lab2/lesson_type.dart';
-import 'package:lab2/time_utils.dart';
-import 'package:lab2/weekday.dart';
+import 'entity.dart';
+import 'lesson_type.dart';
+import 'time_utils.dart';
+import 'weekday.dart';
 
 /// Роздільник полів у рядку CSV.
 const String fieldSeparator = ';';
@@ -24,33 +24,16 @@ const int latestStartMinutes = 19 * minutesInHour;
 /// Заняття: дисципліна, викладач, тип, день, початок, аудиторія, дата запису.
 ///
 /// Об’єкт незмінний: усі поля `final`. Початок зберігається в хвилинах
-/// від півночі.
-class Lesson extends Entity with Printable {
-  /// Створює заняття.
-  const Lesson(
-    this.subject,
-    this.teacher,
-    this.type,
-    this.day,
-    this.startMinutes,
-    this.room,
-    this.addedOn,
-  );
-
-  final String subject;
-
-  final String teacher;
-
-  final LessonType type;
-
-  final Weekday day;
-
-  final int startMinutes;
-
-  final String room;
-
-  final DateTime addedOn;
-
+/// від півночі. Поля оголошено в первинному конструкторі.
+class const Lesson(
+  final String subject,
+  final String teacher,
+  final LessonType type,
+  final Weekday day,
+  final int startMinutes,
+  final String room,
+  final DateTime addedOn,
+) extends Entity with Printable {
   static final Map<String, Lesson> _cache = {};
 
   /// Розбирає рядок CSV у заняття.
