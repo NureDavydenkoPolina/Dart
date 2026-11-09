@@ -38,13 +38,14 @@ const int latestStartMinutes = 19 * minutesInHour;
 
 /// Заняття: дисципліна, викладач, тип, день, початок, аудиторія, дата запису.
 ///
-/// Початок зберігається в хвилинах від півночі.
+/// Початок і тривалість зберігаються в хвилинах.
 typedef Lesson = ({
   String subject,
   String teacher,
   String type,
   String day,
   int startMinutes,
+  int durationMinutes,
   String room,
   DateTime addedOn,
 });
@@ -62,6 +63,8 @@ typedef DayStats = ({int count, int totalMinutes});
 final RegExp timePattern = RegExp(r'^(?<hour>\d{1,2}):(?<minute>\d{2})$');
 
 /// Прізвище викладача: перша літера й решта літер.
+///
+/// Шаблон прив’язаний до початку рядка, тому збіг може бути лише один.
 final RegExp teacherPattern = RegExp(
   r'^(?<first>\p{L})(?<rest>\p{L}+)',
   unicode: true,
@@ -110,6 +113,7 @@ ParseResult parseLine(String line) {
       type: type,
       day: day,
       startMinutes: startMinutes,
+      durationMinutes: lessonDurationMinutes,
       room: room,
       addedOn: addedOn,
     ),
@@ -195,12 +199,10 @@ int Function() makeCounter() {
   return () => ++count;
 }
 
-/// Тривалість заняття [lesson] у хвилинах.
-int durationOf(Lesson lesson) => lessonDurationMinutes;
-
 /// Сумарна тривалість занять [lessons] у хвилинах.
-int totalMinutes(Iterable<Lesson> lessons) =>
-    lessons.map(durationOf).fold(0, (sum, value) => sum + value);
+int totalMinutes(Iterable<Lesson> lessons) => lessons
+    .map((lesson) => lesson.durationMinutes)
+    .fold(0, (sum, value) => sum + value);
 
 /// Найраніший і найпізніший початок серед [lessons].
 ///
@@ -297,14 +299,13 @@ String describeLesson(Lesson lesson, {String separator = ' | '}) {
 }
 
 /// Маскує прізвище викладача: лишає першу літеру, решту замінює на `*`.
-/// Маскує прізвище викладача: лишає першу літеру, решту замінює на `*`.
 String maskTeacher(String teacher) {
-  return teacher.replaceAllMapped(teacherPattern, (match) {
-    if (match is! RegExpMatch) return match[0] ?? '';
-    final first = match.namedGroup('first') ?? '';
-    final rest = match.namedGroup('rest') ?? '';
-    return '$first${'*' * rest.length}';
-  });
+  final match = teacherPattern.firstMatch(teacher);
+  if (match == null) return teacher;
+  final first = match.namedGroup('first') ?? '';
+  final rest = match.namedGroup('rest') ?? '';
+  final tail = teacher.substring(match.end);
+  return '$first${'*' * rest.length}$tail';
 }
 
 /// Вік запису в днях відносно [now].
